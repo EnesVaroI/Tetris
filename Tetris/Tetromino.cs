@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,6 +79,8 @@ namespace Tetris
             new int[2]
         };
 
+        public int[] start_position { get; set; } = new int[2];
+
         private int[,] pieceSelection(int i)
         {
             switch (i)
@@ -108,7 +110,7 @@ namespace Tetris
             }
         }
 
-        private Color colorSelection(int i)
+        public Color colorSelection(int i)
         {
             switch (i)
             {
@@ -148,22 +150,6 @@ namespace Tetris
 
         public ValueTuple<int, int> x_position()
         {
-            int min = position[0][0], max = position[0][0];
-
-            for (int i = 0; i < 3; i++)
-            {
-                if (position[i + 1][0] > position[i][0])
-                    max = position[i + 1][0];
-
-                if (position[i + 1][0] < position[i][0])
-                    min = position[i + 1][0];
-            }
-
-            return (min, max);
-        }
-
-        public ValueTuple<int, int> y_position()
-        {
             int min = position[0][1], max = position[0][1];
 
             for (int i = 0; i < 3; i++)
@@ -173,6 +159,22 @@ namespace Tetris
 
                 if (position[i + 1][1] < position[i][1])
                     min = position[i + 1][1];
+            }
+
+            return (min, max);
+        }
+
+        public ValueTuple<int, int> y_position()
+        {
+            int min = position[0][0], max = position[0][0];
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (position[i + 1][0] > position[i][0])
+                    max = position[i + 1][0];
+
+                if (position[i + 1][0] < position[i][0])
+                    min = position[i + 1][0];
             }
 
             return (min, max);
