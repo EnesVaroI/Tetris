@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -28,7 +28,7 @@ namespace Tetris
 
         KeyboardState keyboardState;
         int spritePosition = 0;
-        int control = 0;
+        int speed = 0;
 
         GraphicsDeviceManager _graphics;
         SpriteBatch _spriteBatch;
@@ -73,7 +73,7 @@ namespace Tetris
 
             // TODO: Add your update logic here
 
-            if (control == 0)
+            if (speed == 0)
             {
                 tetromino = new Tetromino();
 
@@ -82,22 +82,45 @@ namespace Tetris
 
             keyboardState = Keyboard.GetState();
 
+            speed++;
 
-
-            control++;
-            if (keyboardState.IsKeyDown(Keys.Left) && control % 4 == 0 && tetromino.x_position().Item1 != 0)
+            if (keyboardState.IsKeyDown(Keys.Left) && speed % 4 == 0 && tetromino.x_position().Item1 != 0)
             {
                 TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, -1);
-                //spritePosition -= 1;
-            }
-            else if (keyboardState.IsKeyDown(Keys.Right) && control % 4 == 0 && tetromino.x_position().Item2 != 10)
-            {
-                TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, 1);
-                //spritePosition += 1;
             }
 
-            if (control % 15 == 0)
+            else if (keyboardState.IsKeyDown(Keys.Right) && speed % 4 == 0 && tetromino.x_position().Item2 != 10)
+            {
+                TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, 1);
+            }
+
+            if (keyboardState.IsKeyDown(Keys.Up) && speed % 4 == 0)
+            {
+                TetrominoMovement.TetrominoRotate(gameboard.grid, tetromino);
+            }
+
+            if (keyboardState.IsKeyDown(Keys.Down) && speed % 4 == 0 && tetromino.y_position().Item2 != 21)
+            {
                 TetrominoMovement.TetrominoDrop(gameboard.grid, tetromino);
+            }
+
+            if (speed % 15 == 0 && tetromino.y_position().Item2 != 21)
+            {
+                TetrominoMovement.TetrominoDrop(gameboard.grid, tetromino);
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (tetromino.y_position().Item2 == 21 || gameboard.grid[tetromino.position[i][0] + 1, tetromino.position[i][1]] < 0)
+                {
+                    TetrominoMovement.TetrominoLand(gameboard.grid, tetromino);
+
+                    tetromino = new Tetromino();
+                    TetrominoMovement.TetrominoInitialize(gameboard.grid, tetromino);
+
+                    break;
+                }
+            }
 
             //mouseState = Mouse.GetState();
 
@@ -159,14 +182,23 @@ namespace Tetris
                     if (gameboard.grid[i, j] == 1)
                         _spriteBatch.Draw(block, new Vector2(31 + 28 * j, 25 + 28 * i), tetromino.color);
 
+                    if (gameboard.grid[i, j] < 0)
+                        _spriteBatch.Draw(block, new Vector2(31 + 28 * j, 25 + 28 * i), tetromino.colorSelection(-gameboard.grid[i, j] - 1));
+
                     _spriteBatch.DrawString(spriteFont, text: gameboard.grid[i, j].ToString(), new Vector2(31 + 28 * j, 25 + 28 * i), color: Color.White);
                 }
             }
 
             for (int i = 0; i < 4; i++)
-                _spriteBatch.DrawString(spriteFont, text: tetromino.position[i][0].ToString(), new Vector2(20 * i, 200), color: Color.White);
+                _spriteBatch.DrawString(spriteFont, text: tetromino.position[i][0].ToString(), new Vector2(400 + 20 * i, 120), color: Color.White);
             for (int i = 0; i < 4; i++)
-                _spriteBatch.DrawString(spriteFont, text: tetromino.position[i][1].ToString(), new Vector2(20 * i, 400), color: Color.White);
+                _spriteBatch.DrawString(spriteFont, text: tetromino.position[i][1].ToString(), new Vector2(400 + 20 * i, 160), color: Color.White);
+
+            //_spriteBatch.DrawString(spriteFont, text: tetromino.x_position().Item1.ToString(), new Vector2(400, 550), color: Color.White);
+            //_spriteBatch.DrawString(spriteFont, text: tetromino.x_position().Item2.ToString(), new Vector2(450, 550), color: Color.White);
+
+            //_spriteBatch.DrawString(spriteFont, text: tetromino.y_position().Item1.ToString(), new Vector2(400, 600), color: Color.White);
+            //_spriteBatch.DrawString(spriteFont, text: tetromino.y_position().Item2.ToString(), new Vector2(450, 600), color: Color.White);
 
             _spriteBatch.End();
 
