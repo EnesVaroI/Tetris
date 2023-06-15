@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ namespace Tetris
 {
     internal static class TetrominoMovement
     {
-        public static void TetrominoRotate(Tetromino piece)
+        public static void TetrominoRotate(int[,] gameboard, Tetromino tetromino)
         {
             int[,] temp = new int[4, 4];
 
@@ -17,7 +17,7 @@ namespace Tetris
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    temp[j, 3 - i] = piece.piece[i, j];
+                    temp[j, 3 - i] = tetromino.piece[i, j];
                 }
             }
 
@@ -25,7 +25,7 @@ namespace Tetris
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    piece.piece[i, j] = temp[i, j];
+                    tetromino.piece[i, j] = temp[i, j];
                 }
             }
         }
@@ -74,6 +74,30 @@ namespace Tetris
                 gameboard[tetromino.position[i][0] + 1, tetromino.position[i][1]]++;
 
                 tetromino.position[i][0] += 1;
+            }
+        }
+
+        public static void TetrominoLand(int[,] gameboard, Tetromino tetromino)
+        {
+            int c = 0;
+
+            if (tetromino.color == Color.Yellow) c = 1;
+
+            else if (tetromino.color == Color.Blue) c = 2;
+
+            else if (tetromino.color == Color.Green) c = 3;
+
+            else if (tetromino.color == Color.Red) c = 4;
+
+            else if (tetromino.color == Color.Orange) c = 5;
+
+            else if (tetromino.color == Color.Purple) c = 6;
+
+            else if (tetromino.color == Color.DeepPink) c = 7;
+
+            for (int i = 0; i < 4; i++)
+            {
+                gameboard[tetromino.position[i][0], tetromino.position[i][1]] = -c;
             }
         }
     }
