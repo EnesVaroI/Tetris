@@ -86,12 +86,26 @@ namespace Tetris
 
             if (keyboardState.IsKeyDown(Keys.Left) && speed % 4 == 0 && tetromino.x_position().Item1 != 0)
             {
-                TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, -1);
+                for (int i = 0; i < 4; i++)
+                {
+                    if (gameboard.grid[tetromino.position[i][0], tetromino.position[i][1] - 1] < 0)
+                        break;
+
+                    if (i == 3)
+                        TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, -1);
+                }
             }
 
-            else if (keyboardState.IsKeyDown(Keys.Right) && speed % 4 == 0 && tetromino.x_position().Item2 != 10)
+            if (keyboardState.IsKeyDown(Keys.Right) && speed % 4 == 0 && tetromino.x_position().Item2 != 10)
             {
-                TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, 1);
+                for (int i = 0; i < 4; i++)
+                {
+                    if (gameboard.grid[tetromino.position[i][0], tetromino.position[i][1] + 1] < 0)
+                         break;
+
+                    if (i == 3)
+                        TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, 1);
+                }
             }
 
             if (keyboardState.IsKeyDown(Keys.Up) && speed % 4 == 0)
