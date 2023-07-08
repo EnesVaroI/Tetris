@@ -19,53 +19,70 @@ namespace Tetris
             skew
         }
 
+        public Tetromino()
+        {
+            Random random = new Random();
+            int i = random.Next(0, 7);
+            
+            piece = pieceSelection(i);
+            color = colorSelection(i);
+            length = piece.GetLength(0);
+        }
+
+        public Tetromino(Tetromino tetromino)
+        {
+            this.piece = tetromino.piece;
+            this.color = tetromino.color;
+            this.position = tetromino.position;
+        }
+
+        public Tetromino(int i)
+        {
+            piece = pieceSelection(i);
+            color = colorSelection(i);
+            length = piece.GetLength(0);
+        }
+
         private readonly int[,] piece0 = {
-            { 0, 0, 0, 0 },
-            { 0, 1, 1, 0 },
-            { 0, 1, 1, 0 },
-            { 0, 0, 0, 0 },
+            { 1, 1 },
+            { 1, 1 }
         };
 
         private readonly int[,] piece1 = {
             { 0, 0, 0, 0 },
-            { 0, 0, 0, 0 },
             { 1, 1, 1, 1 },
             { 0, 0, 0, 0 },
+            { 0, 0, 0, 0 }
         };
 
         private readonly int[,] piece2 = {
-            { 0, 0, 0, 0 },
-            { 0, 1, 0, 0 },
-            { 1, 1, 1, 0 },
-            { 0, 0, 0, 0 },
+            { 0, 1, 0},
+            { 1, 1, 1},
+            { 0, 0, 0}
         };
 
         private readonly int[,] piece3 = {
-            { 0, 0, 0, 0 },
-            { 0, 0, 1, 0 },
-            { 1, 1, 1, 0 },
-            { 0, 0, 0, 0 },
+            { 0, 0, 1 },
+            { 1, 1, 1 },
+            { 0, 0, 0 }
         };
 
         private readonly int[,] piece4 = {
-            { 0, 0, 0, 0 },
-            { 1, 0, 0, 0 },
-            { 1, 1, 1, 0 },
-            { 0, 0, 0, 0 },
+            { 1, 0, 0 },
+            { 1, 1, 1 },
+            { 0, 0, 0 }
         };
 
         private readonly int[,] piece5 = {
-            { 0, 0, 0, 0 },
-            { 0, 1, 1, 0 },
-            { 1, 1, 0, 0 },
-            { 0, 0, 0, 0 },
+            { 0, 1, 1 },
+            { 1, 1, 0 },
+            { 0, 0, 0 }
         };
 
         private readonly int[,] piece6 = {
-            { 0, 0, 0, 0 },
-            { 1, 1, 0, 0 },
-            { 0, 1, 1, 0 },
-            { 0, 0, 0, 0 },
+            { 1, 1, 0 },
+            { 0, 1, 1 },
+            { 0, 0, 0 }
         };
 
         public int[,] piece { get; set; }
@@ -76,10 +93,11 @@ namespace Tetris
             new int[2],
             new int[2],
             new int[2],
+            new int[2],
             new int[2]
         };
 
-        public int[] start_position { get; set; } = new int[2];
+        public int length { get; set; }
 
         private int[,] pieceSelection(int i)
         {
@@ -106,46 +124,30 @@ namespace Tetris
                 case 6:
                     return piece6;
 
-                default: return null;
+                default:
+                    return null;
             }
         }
 
         public Color colorSelection(int i)
         {
-            switch (i)
+            return i switch
             {
-                case 0:
-                    return Color.Yellow;
-
-                case 1:
-                    return Color.Blue;
-
-                case 2:
-                    return Color.Green;
-
-                case 3:
-                    return Color.Red;
-
-                case 4:
-                    return Color.Orange;
-
-                case 5:
-                    return Color.Purple;
-
-                case 6:
-                    return Color.DeepPink;
-
-                default: return Color.White;
-            }
+                0 => Color.Yellow,
+                1 => Color.Blue,
+                2 => Color.Green,
+                3 => Color.Red,
+                4 => Color.Orange,
+                5 => Color.Purple,
+                6 => Color.DeepPink,
+                _ => Color.White
+            };
         }
 
-        public Tetromino()
+        public int getPieceType()
         {
-            Random random = new Random();
-            int i = random.Next(0, 7);
-
-            piece = pieceSelection(i);
-            color = colorSelection(i);
+            List<int[,]> pieces = new List<int[,]> { piece0, piece1, piece2, piece3, piece4, piece5, piece6 };
+            return pieces.IndexOf(piece);
         }
 
         public ValueTuple<int, int> x_position()
@@ -154,10 +156,10 @@ namespace Tetris
 
             for (int i = 0; i < 3; i++)
             {
-                if (position[i + 1][1] > position[i][1])
+                if (position[i + 1][1] > max)
                     max = position[i + 1][1];
 
-                if (position[i + 1][1] < position[i][1])
+                if (position[i + 1][1] < min)
                     min = position[i + 1][1];
             }
 
@@ -170,10 +172,10 @@ namespace Tetris
 
             for (int i = 0; i < 3; i++)
             {
-                if (position[i + 1][0] > position[i][0])
+                if (position[i + 1][0] > max)
                     max = position[i + 1][0];
 
-                if (position[i + 1][0] < position[i][0])
+                if (position[i + 1][0] < min)
                     min = position[i + 1][0];
             }
 
