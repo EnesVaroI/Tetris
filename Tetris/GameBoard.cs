@@ -1,6 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,8 +10,8 @@ namespace Tetris
 {
     internal class GameBoard
     {
-        private int rows;
-        private int columns;
+        private readonly int rows;
+        private readonly int columns;
 
         public int[,] grid { get; set; }
 
@@ -20,19 +22,11 @@ namespace Tetris
             grid = new int[rows, columns];
         }
 
-        public int GetCellValue(int row, int column)
+        public int this[int row, int column]
         {
-            return grid[row, column];
-        }
+            get => grid[row, column];
 
-        public void SetCellValue(int row, int column, int value)
-        {
-            grid[row, column] = value;
-        }
-
-        public bool IsCellEmpty(int row, int column)
-        {
-            return GetCellValue(row, column) == 0;
+            set => grid[row, column] = value;
         }
 
         public void ClearBoard()
@@ -41,7 +35,7 @@ namespace Tetris
             {
                 for (int column = 0; column < columns; column++)
                 {
-                    grid[row, column] = 0;
+                    this[row, column] = 0;
                 }
             }
         }
@@ -50,8 +44,31 @@ namespace Tetris
         {
             for (int column = 0; column < columns; column++)
             {
-                grid[row, column] = 0;
+                this[row, column] = 0;
             }
+
+            LineClearGravity(row);
+        }
+
+        public bool IsRowFull(int row)
+        {
+            for (int column = 0; column < columns; column++)
+            {
+                if (this[row, column] >= 0)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private void LineClearGravity(int row)
+        {
+            for (row--; row >= 0; row--)
+                for (int column = 0; column < columns; column++)
+                {
+                    this[row + 1, column] = grid[row, column];
+                    this[row, column] = 0;
+                }
         }
     }
 }
