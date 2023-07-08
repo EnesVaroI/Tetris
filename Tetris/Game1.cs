@@ -2,33 +2,39 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Runtime.CompilerServices;
-using static System.Formats.Asn1.AsnWriter;
+using System.Linq;
+using System.Threading;
+using System.Timers;
 
 namespace Tetris
 {
     public class Game1 : Game
     {
-        //private const int GridSize = 10; // Number of rows and columns in the grid
-        //private const int CellSize = 40; // Size of each cell in pixels
-
-        //Texture2D ballTexture;
-        //int score = 0;
-        //bool control = false;
-
         SpriteFont spriteFont;
-
-        //MouseState mouseState;
 
         Texture2D background;
         Texture2D block;
+        Texture2D frame;
 
         GameBoard gameboard;
         Tetromino tetromino;
+        Tetromino ghostTetromino;
+        Tetromino nextTetromino;
 
         KeyboardState keyboardState;
-        int spritePosition = 0;
+        MouseState mouseState;
+
+        bool isLanded = false;
+        bool landing = false;
+        DateTime timeOfLanding;
+
         int speed = 0;
+        bool mouseControl = false;
+        bool keyboardControl = false;
+
+        int linesCleared = 0;
+        int score = 0;
+        int level = 1;
 
         GraphicsDeviceManager _graphics;
         SpriteBatch _spriteBatch;
@@ -59,11 +65,11 @@ namespace Tetris
 
             // TODO: use this.Content to load your game content here
 
-            //ballTexture = Content.Load<Texture2D>("ball");
             spriteFont = Content.Load<SpriteFont>("galleryFont");
 
             background = Content.Load<Texture2D>("726c6346330007.5607cdd1439a0");
             block = Content.Load<Texture2D>("block");
+            frame = Content.Load<Texture2D>("frame");
         }
 
         protected override void Update(GameTime gameTime)
@@ -78,11 +84,32 @@ namespace Tetris
                 tetromino = new Tetromino();
 
                 TetrominoMovement.TetrominoInitialize(gameboard.grid, tetromino);
+
+                ghostTetromino = new Tetromino(tetromino);
+
+                nextTetromino = new Tetromino(new Random().Next(0, 7));
             }
 
+            isLanded = tetromino.y_position().Item2 == 21 || Enumerable.Range(0, 4).Any(i => gameboard.grid[tetromino.position[i][0] + 1, tetromino.position[i][1]] < 0);
+
+            int[][] temp_ghostTetromino;
+            TetrominoMovement.GhostTetrominoLocate(gameboard.grid, tetromino, out temp_ghostTetromino);
+            ghostTetromino.position = temp_ghostTetromino;
+
             keyboardState = Keyboard.GetState();
+            mouseState = Mouse.GetState();
 
             speed++;
+
+            if (mouseState.LeftButton == ButtonState.Pressed && speed % 4 == 0 && mouseControl == false)
+            {
+                TetrominoMovement.TetrominoInstaPlace(gameboard.grid, tetromino, ghostTetromino.position);
+                mouseControl = true;
+                goto EndTurn;
+            }
+
+            if (mouseState.LeftButton == ButtonState.Released)
+                mouseControl = false;
 
             if (keyboardState.IsKeyDown(Keys.Left) && speed % 4 == 0 && tetromino.x_position().Item1 != 0)
             {
@@ -90,7 +117,7 @@ namespace Tetris
                 {
                     if (gameboard.grid[tetromino.position[i][0], tetromino.position[i][1] - 1] < 0)
                         break;
-
+                    
                     if (i == 3)
                         TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, -1);
                 }
@@ -108,52 +135,78 @@ namespace Tetris
                 }
             }
 
-            if (keyboardState.IsKeyDown(Keys.Up) && speed % 4 == 0)
+            if (keyboardState.IsKeyDown(Keys.Up) && speed % 4 == 0 && keyboardControl == false)
             {
                 TetrominoMovement.TetrominoRotate(gameboard.grid, tetromino);
+                keyboardControl = true;
             }
 
-            if (keyboardState.IsKeyDown(Keys.Down) && speed % 4 == 0 && tetromino.y_position().Item2 != 21)
+            if (Keyboard.GetState().IsKeyUp(Keys.Up))
+                keyboardControl = false;
+
+            if (keyboardState.IsKeyDown(Keys.Down) && speed % 4 == 0 && !isLanded)
             {
                 TetrominoMovement.TetrominoDrop(gameboard.grid, tetromino);
             }
 
-            if (speed % 15 == 0 && tetromino.y_position().Item2 != 21)
+            if (speed % (21 - Math.Min(20, level)) == 0 && !isLanded)
             {
                 TetrominoMovement.TetrominoDrop(gameboard.grid, tetromino);
             }
 
-            for (int i = 0; i < 4; i++)
+            //if (mouseState.Position.X < tetromino.length)
+            //    TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, -1);
+
+            //if (mouseState.Position.X > tetromino.length)
+            //    TetrominoMovement.TetrominoMove(gameboard.grid, tetromino, 1);
+
+            if (isLanded && !landing)
             {
-                if (tetromino.y_position().Item2 == 21 || gameboard.grid[tetromino.position[i][0] + 1, tetromino.position[i][1]] < 0)
+                timeOfLanding = DateTime.Now.AddSeconds(1);
+                landing = true;
+            }
+
+            EndTurn:
+            while (isLanded && DateTime.Now >= timeOfLanding)
+            {
+                TetrominoMovement.TetrominoLand(gameboard.grid, tetromino);
+
+                int a = 0;
+
+                for (int j = 21; j >= 0; j--)
                 {
-                    TetrominoMovement.TetrominoLand(gameboard.grid, tetromino);
+                    if (gameboard.IsRowFull(j))
+                    {
+                        gameboard.ClearRow(j);
+                        j++;
+                        
+                        linesCleared++;
 
-                    tetromino = new Tetromino();
-                    TetrominoMovement.TetrominoInitialize(gameboard.grid, tetromino);
+                        if (linesCleared >= 10 * level + level * (level - 1) / 2)
+                            level++;
 
-                    break;
+                        a++;
+                    }
                 }
+
+                if (a != 0)
+                    score += 20 * (a * a + 1) * level;
+
+                tetromino = new Tetromino(nextTetromino.getPieceType());
+                TetrominoMovement.TetrominoInitialize(gameboard.grid, tetromino);
+
+                ghostTetromino = new Tetromino(tetromino);
+
+                nextTetromino = new Tetromino(new Random().Next(0, 7));
+
+                landing = false;
+
+                break;
             }
-
-            //mouseState = Mouse.GetState();
-
-            //float MouseTargetDist = Vector2.Distance(new Vector2(200, 200), mouseState.Position.ToVector2());
-
-            //if (mouseState.LeftButton == ButtonState.Pressed && control == false)
-            //{
-            //    score++;
-            //    control = true;
-            //}
-
-            //if (mouseState.LeftButton == ButtonState.Released)
-            //{
-            //    control = false;
-            //}
 
             base.Update(gameTime);
         }
-
+        float timer = 0.0f;
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
@@ -161,27 +214,6 @@ namespace Tetris
             // TODO: Add your drawing code here
 
             _spriteBatch.Begin();
-
-            //for (int row = 0; row < GridSize; row++)
-            //{
-            //    for (int col = 0; col < GridSize; col++)
-            //    {
-            //        // Calculate the position of each cell
-            //        Vector2 cellPosition = new Vector2(col * CellSize, row * CellSize);
-
-            //        // Determine the color of each cell based on the value in the grid
-            //        Color cellColor = (grid[row, col] == 1) ? Color.White : Color.Black;
-
-            //        // Draw a rectangle for each cell
-            //        _spriteBatch.Draw(
-            //            texture: ballTexture, // You can use a texture if you want to display a specific image for each cell
-            //            destinationRectangle: new Rectangle((int)cellPosition.X, (int)cellPosition.Y, CellSize, CellSize),
-            //            color: cellColor
-            //        );
-            //    }
-            //}
-
-            //_spriteBatch.DrawString(spriteFont, text: score.ToString(), new Vector2(200, 200), color: Color.White);
 
             _spriteBatch.Draw(
                         texture: background,
@@ -193,40 +225,46 @@ namespace Tetris
             {
                 for (int j = 0; j < 11; j++)
                 {
-                    if (gameboard.grid[i, j] == 1)
-                        _spriteBatch.Draw(block, new Vector2(31 + 28 * j, 25 + 28 * i), tetromino.color);
+                    if (gameboard.grid[i, j] == 1 && !isLanded)
+                        _spriteBatch.Draw(block, new Vector2(25 + 28 * j, 31 + 28 * i), tetromino.color);
+
+
+                    timer += (float)gameTime.ElapsedGameTime.TotalSeconds; // Increment the timer
+                    float alpha = (float)Math.Abs(Math.Sin(timer)) * 0.5f + 0.5f;
+                    Color color = new Color(0.6f, 0.7f, 0.1f, alpha);
+                    if (gameboard.grid[i, j] == 1 && isLanded)
+                        _spriteBatch.Draw(block, new Vector2(25 + 28 * j, 31 + 28 * i), color);
 
                     if (gameboard.grid[i, j] < 0)
-                        _spriteBatch.Draw(block, new Vector2(31 + 28 * j, 25 + 28 * i), tetromino.colorSelection(-gameboard.grid[i, j] - 1));
-
-                    _spriteBatch.DrawString(spriteFont, text: gameboard.grid[i, j].ToString(), new Vector2(31 + 28 * j, 25 + 28 * i), color: Color.White);
+                        _spriteBatch.Draw(block, new Vector2(25 + 28 * j, 31 + 28 * i), tetromino.colorSelection(-gameboard.grid[i, j] - 1));
                 }
             }
 
-            for (int i = 0; i < 4; i++)
-                _spriteBatch.DrawString(spriteFont, text: tetromino.position[i][0].ToString(), new Vector2(400 + 20 * i, 120), color: Color.White);
-            for (int i = 0; i < 4; i++)
-                _spriteBatch.DrawString(spriteFont, text: tetromino.position[i][1].ToString(), new Vector2(400 + 20 * i, 160), color: Color.White);
+            for (int i = 0; i < nextTetromino.length; i++)
+            {
+                for (int j = 0; j < nextTetromino.length; j++)
+                {
+                    if (nextTetromino.length == 2 && nextTetromino.piece[i, j] == 1)
+                        _spriteBatch.Draw(block, new Vector2(420 + 28 * j, 149 + 28 * i), nextTetromino.color);
 
-            //_spriteBatch.DrawString(spriteFont, text: tetromino.x_position().Item1.ToString(), new Vector2(400, 550), color: Color.White);
-            //_spriteBatch.DrawString(spriteFont, text: tetromino.x_position().Item2.ToString(), new Vector2(450, 550), color: Color.White);
+                    else if (nextTetromino.length == 3 && nextTetromino.piece[i, j] == 1)
+                        _spriteBatch.Draw(block, new Vector2(392 + 28 * j, 149 + 28 * i), nextTetromino.color);
 
-            //_spriteBatch.DrawString(spriteFont, text: tetromino.y_position().Item1.ToString(), new Vector2(400, 600), color: Color.White);
-            //_spriteBatch.DrawString(spriteFont, text: tetromino.y_position().Item2.ToString(), new Vector2(450, 600), color: Color.White);
+                    else if (nextTetromino.length == 4 && nextTetromino.piece[i, j] == 1)
+                        _spriteBatch.Draw(block, new Vector2(392 + 28 * j, 121 + 28 * i), nextTetromino.color);
+                }
+            }
+
+            foreach (var position in TetrominoMovement.GhostTetrominoDisplay(ghostTetromino.position))
+                _spriteBatch.Draw(frame, position, ghostTetromino.color);
+
+            _spriteBatch.DrawString(spriteFont, text: "Lines: " + linesCleared.ToString(), new Vector2(370, 340), color: Color.White);
+            _spriteBatch.DrawString(spriteFont, text: "Level: " + level.ToString(), new Vector2(370, 380), color: Color.White);
+            _spriteBatch.DrawString(spriteFont, text: "Score: " + score.ToString(), new Vector2(370, 420), color: Color.White);
 
             _spriteBatch.End();
 
             base.Draw(gameTime);
         }
     }
-
-    //public static class SpriteBatchExtensions
-    //{
-    //    public static void DrawLine(this SpriteBatch spriteBatch, Vector2 start, Vector2 end, Color color, int thickness = 1)
-    //    {
-    //        Vector2 delta = end - start;
-    //        float angle = (float)Math.Atan2(delta.Y, delta.X);
-    //        spriteBatch.Draw(Texture2D, start, null, color, angle, Vector2.Zero, new Vector2(delta.Length(), thickness), SpriteEffects.None, 0);
-    //    }
-    //}
 }
