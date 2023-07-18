@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.IO;
 
 namespace Tetris
 {
     public static class ScoreRepository
     {
-        private static string connectionString = @"Data Source=C:\Users\Mehmet\source\repos\Tetris\Score Database.db;Version=3;";
+        private static string filePath = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName + @"\Score Database.db";
+
+        private static string connectionString = $@"Data Source={filePath};Version=3;";
 
         public static void InitializeDatabase()
         {
