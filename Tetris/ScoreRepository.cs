@@ -7,9 +7,9 @@ namespace Tetris
 {
     public static class ScoreRepository
     {
-        private static string filePath = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName + @"\Score Database.db";
-
-        private static string connectionString = $@"Data Source={filePath};Version=3;";
+        private static string connectionString = $@"
+            Data Source={Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName + @"\Score Database.db"};
+            Version=3;";
 
         public static void InitializeDatabase()
         {
