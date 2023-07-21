@@ -53,7 +53,7 @@ namespace Tetris
             Lost
         }
 
-        void Quit(int new_level)
+        void Quit(int new_level = 1)
         {
             gameboard.ClearBoard();
 
@@ -126,7 +126,7 @@ namespace Tetris
                 if (mouseState.IsInRange((363, 523), (598, 635)) && mouseState.IsClick(MouseButtonType.LeftButton))
                 {
                     gameState = GameState.Menu;
-                    Quit(1);
+                    Quit();
                 }
             }
 
@@ -288,7 +288,7 @@ namespace Tetris
                 if (mouseState.IsInRange((363, 523), (598, 635)) && mouseState.IsClick(MouseButtonType.LeftButton))
                 {
                     gameState = GameState.Menu;
-                    Quit(1);
+                    Quit();
                 }
             }
             
