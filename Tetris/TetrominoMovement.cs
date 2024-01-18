@@ -321,7 +321,7 @@ namespace Tetris
                     rightHeight = 0;
             }
 
-            return new int[2] { middleHeight - leftHeight, middleHeight - rightHeight };
+            return new int[2] { leftHeight - middleHeight, rightHeight - middleHeight};
         }
     }
 
